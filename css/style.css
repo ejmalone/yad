@@ -1,0 +1,8 @@
+#data-log {
+   max-height: 200px;
+   overflow-y: scroll;
+}
+
+#map {
+   height: 400px;
+}

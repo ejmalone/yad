@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+   
+   <head>
+      
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Request Inspector</title>
+
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap-theme.min.css">
+
+      <link rel="stylesheet" href="css/style.css">
+
+   </head>
+
+   <body>
+      
+      <div class="container">
+      
+         <canvas id="graph"></canvas>
+         
+         <div class="row">
+            <div id="map" class="col-xs-12 col-md-8">
+               map
+            </div>
+            
+            <div class="col-xs-6 col-md-4">
+               <h3>Honeypot Hits</h3>
+
+               <div id="honeypot-list"></div>
+            </div>
+         </div>
+
+         <div class="row">
+            <div id="data-log"></div>
+         </div>
+
+      </div>
+
+      <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+      
+
+      <script src="http://ericmalone.net:3000/socket.io/socket.io.js"></script>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/react/0.12.0/react-with-addons.js"></script>
+      
+      <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB2pWQQon_-BRhcRqOr-ujdgnYwclzl_zQ"></script>
+
+      <!-- If JSX is running -->
+         <script src="build/vis.js"></script>
+         <script src="build/ipmapper.js"></script>
+         <script src="build/graph.js"></script>
+         <script src="build/map.js"></script>
+      
+      <!-- Else use this and replace all build/ with src/ and set type="text/jsx"
+         <script src="//cdnjs.cloudflare.com/ajax/libs/react/0.12.0/JSXTransformer.js"></script>
+      -->
+      
+      <script>
+         
+         var socket = io('http://ericmalone.net:3000/');
+
+         socket.on('request', function(data) {
+
+            var obj;
+
+            try {
+               if(typeof data == 'string')
+                  obj = JSON.parse(data);
+               else
+                  obj = data;
+
+            } catch(e) {
+               console.error("Exception in parsing JSON in socket.on('request')", e.message, data);
+               obj = {};
+            }
+
+            if(obj.code && obj.url)
+               jQuery(document).trigger('vis.data', obj);
+            else
+               console.error("Invalid request data for socket.on('request')", typeof(data), data);
+
+         });
+            
+      </script>
+   </body>
+
+</html>

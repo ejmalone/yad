@@ -1,0 +1,3 @@
+set jsx to work on the src and build directories
+
+jsx --watch src/ build/

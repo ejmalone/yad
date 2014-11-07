@@ -1,1 +1,2 @@
-build/
+build/.module-cache
+build/*.js

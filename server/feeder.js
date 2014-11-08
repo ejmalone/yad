@@ -11,7 +11,7 @@ function output()
    var response, 
        rand = random(0, 100);
    
-   if(rand < 5)
+   if(rand < 3)
       response = {code: 200, url: "/bar", honeypot: true, ip: honeypot_ip()};
 
    else if(rand < 90)
@@ -32,7 +32,13 @@ function ip()
 
 function honeypot_ip()
 {
-   var ips = ['33.19.199.102', '22.33.44.55', '29.52.119.255', '92.210.59.222'];
+   var ips = [
+      '14.208.113.42', // china
+      '41.71.128.13',  // nigeria
+      '80.71.240.0',   // russia
+      '146.134.13.32', // brazil
+      '66.150.14.181' // tacoma
+   ];
 
    return ips[random(0,ips.length)];
 }

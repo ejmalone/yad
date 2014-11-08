@@ -19,10 +19,19 @@
       
       <div class="container">
       
-         <canvas id="graph" width="50" height="300">Upgrayedd your browser</canvas>
+         <h3>Real Time Data</h3>
+         <div id="real-time-legend">
+            <button class="btn btn-success btn-sm">200 OK</button>
+            <button class="btn btn-danger btn-sm">5XX ERROR</button>
+            <button class="btn btn-warning btn-sm">HONEYPOT REQUEST</button>
+         </div>
 
-         <div id="graph-images" class="row"></div>
-         
+         <div id="graph-images" class="row">
+            <ul></ul>
+         </div>
+        
+         <br>
+
          <div class="row">
             <div id="map" class="col-xs-12 col-md-8">
                map
@@ -35,13 +44,17 @@
             </div>
          </div>
 
+         <br>
+
          <div class="row">
+            <h3>Incoming Data</h3>
             <div id="data-log"></div>
          </div>
 
       </div>
 
       <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+      <script src="build/jquery.scrollTo.min.js"></script>
 
       <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
       
@@ -80,8 +93,10 @@
                obj = {};
             }
 
-            if(obj.code && obj.url)
+            if(obj.code && obj.url) {
+               jQuery('#data-log').prepend(data + '<br />');
                jQuery(document).trigger('vis.data', obj);
+            }
             else
                console.error("Invalid request data for socket.on('request')", typeof(data), data);
 

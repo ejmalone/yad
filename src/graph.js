@@ -4,7 +4,7 @@ function Graph() {
 
 Graph.consts = {
    // When to repaint the canvas
-   REFRESH: 10000,
+   REFRESH: 7000,
 
    HTTP_OK: 200,
    HTTP_ERR: 500
@@ -30,9 +30,9 @@ Graph.prototype = {
 
    init: function() {
 
-      this.oksBuffer   = new LineBuffer({color: '#00ff00', debug: true});
-      this.errsBuffer  = new LineBuffer({color: '#ff0000'});
-      this.honeyBuffer = new LineBuffer({color: '#ffa500'});
+      this.oksBuffer   = new LineBuffer({color: '#5cb85c', heightOffset: 100, debug: true});
+      this.errsBuffer  = new LineBuffer({color: '#d9534f', heightOffset: 50});
+      this.honeyBuffer = new LineBuffer({color: '#f0ad4e', heightOffset: 10});
 
       this.buffers = [this.oksBuffer, this.errsBuffer, this.honeyBuffer];
 
@@ -48,7 +48,7 @@ Graph.prototype = {
    },
 
    buildCanvas: function() {
-      this.canvas = document.getElementById('graph');
+      this.canvas = jQuery('<canvas width="50" height="170" id="graph"></canvas>').appendTo(document.body).get(0);
       this.context = this.canvas.getContext('2d');
    },
 
@@ -57,6 +57,14 @@ Graph.prototype = {
       for(var i in this.buffers) {
          var buff = this.buffers[i],
              points = buff.queuedForWork;
+
+
+         this.context.strokeStyle = '#000000';
+         this.context.lineWidth = 1;
+         this.context.beginPath();
+         this.context.moveTo(0, this.canvas.height - buff.heightOffset);
+         this.context.lineTo(this.canvas.width, this.canvas.height - buff.heightOffset);
+         this.context.stroke();
       
          if(!points)
             continue;
@@ -65,12 +73,12 @@ Graph.prototype = {
          this.context.lineWidth = 3;
          this.context.beginPath();
 
-         this.context.moveTo(0, this.canvas.height - buff.lastY); 
+         this.context.moveTo(0, this.canvas.height - buff.lastY - buff.heightOffset - 10); 
 
          var lastY;
-         for(time = startTime + 5, i=1; time < endTime; time +=5, ++i) {
+         for(time = startTime + 1, i=1; time < endTime; ++time, ++i) {
             var count = points[time] || 0;
-            this.context.lineTo(i * 50, this.canvas.height - count) 
+            this.context.lineTo(i * 10, this.canvas.height - count - buff.heightOffset - 10); 
             
             lastY = count;
          }
@@ -89,9 +97,24 @@ Graph.prototype = {
    buildImage: function() {
       var dataUrl = this.canvas.toDataURL();
 
-      var img = jQuery('<img />').attr('src', dataUrl);
+      var img = jQuery('<img />');
+      
+      // use an onload to prevent 'FOUC' with unloaded image appended to the list
+      img.on('load', function() {
+         var li = jQuery('<li></li>').append(img);
 
-      jQuery('#graph-images').append(img);
+         // increase width of the <ul> containing the image slices so that it will scroll nicely horizontally.
+         // adding the 200px for the right side padding  a 50px fudge so that the <li>'s will never stack
+         jQuery('#graph-images ul').append(li).css('width', jQuery('#graph-images ul li').length * 50 + 200 + 50 + 'px');
+
+         setTimeout(function() {
+            jQuery('#graph-images').scrollTo('100%');
+         }, 200);
+      });
+
+      img.attr('src', dataUrl);
+
+      // reset the canvas
       this.canvas.width = this.canvas.width;
    },
 
@@ -114,9 +137,7 @@ Graph.prototype = {
          this.errsBuffer.push(data);
 
       if(!this.startTime) {
-         this.startTime = Math.floor(data.time / 1000);
-         this.startTime = this.startTime - (this.startTime % 5);
-
+         this.startTime = Math.round(data.time / 1000);
          this.endTime = this.startTime + Graph.consts.REFRESH / 1000;  
       }
    },
@@ -146,6 +167,7 @@ LineBuffer = function(opts) {
    if(opts) {
       this.color = opts.color;
       this.debug = opts.debug;
+      this.heightOffset = opts.heightOffset;
    }
 
 };
@@ -167,24 +189,34 @@ LineBuffer.prototype = {
    
    color: '#000000',
 
+   heightOffset: 0,
+
    debug: false,
 
+   /**
+    * Referencing http://stackoverflow.com/questions/4994201/is-object-empty
+    */
    queuedIsEmpty: function() {
-      return !this.queuedForWork.length;
+      for(var i in this.queuedForWork) {
+         if(hasOwnProperty.call(this.queuedForWork, i))
+            return false;
+      }
+
+      return true;
    },
 
    queueForWork: function() {
-      this.queuedForWork = this.buffer;
+      this.queuedForWork = jQuery.extend({}, this.buffer);
+
       this.buffer = {};
    },
 
    push: function(data) {
 
-      var time_in_secs = Math.floor(data.time / 1000);
-      var time_base = time_in_secs - (time_in_secs % 5);
+      var time_in_secs = Math.round(data.time / 1000);
 
-      this.buffer[time_base] |= 0;
-      this.buffer[time_base]++;
+      this.buffer[time_in_secs] |= 0;
+      this.buffer[time_in_secs]++;
    }
 
 };

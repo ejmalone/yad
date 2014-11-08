@@ -56,5 +56,5 @@ Feeder.prototype.feed = function() {
 
       this.feed();
 
-   }.bind(this), random(10, 300));
+   }.bind(this), random(10, 250));
 };

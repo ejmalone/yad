@@ -1,8 +1,21 @@
+/* keep it off the page */
 canvas#graph {
-   border: 1px solid black;
+   position: absolute;
+   left: -500px;
+   top: -500px;
 }
 
-#graph-images img {
+#graph-images {
+   overflow-y: scroll;
+   min-height: 170px;
+}
+
+#graph-images ul {
+   list-style-type: none;
+   padding-right: 200px; /* ensure the newest data isn't jutted against the side */
+}
+
+#graph-images ul li {
    float: left;
 }
 

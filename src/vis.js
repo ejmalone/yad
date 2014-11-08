@@ -8,7 +8,7 @@ var DataLog = React.createClass({
 
       jQuery(document).on('vis.data', function(e, data) {
          var existing = this.state.data;
-         existing.push(JSON.stringify(data));
+         existing.unshift(JSON.stringify(data));
          this.setState({data: existing});
 
       }.bind(this));
@@ -17,10 +17,10 @@ var DataLog = React.createClass({
    render: function() {
 
       var createItem = function(json) {
-         return <div>{json}</div>;
+         return <p>{json}</p>;
       };
 
-      return <div>{this.state.data.map(createItem)}</div>;
+      return <p>{this.state.data.map(createItem)}</p>;
    }
 });
 
@@ -72,6 +72,6 @@ var HoneypotList = React.createClass({
 });
 
 $(function() {
-   React.render(<DataLog />, document.getElementById('data-log'));
+   // React.render(<DataLog />, document.getElementById('data-log'));
    React.render(<HoneypotList />, document.getElementById('honeypot-list'));
 })

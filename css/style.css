@@ -1,3 +1,12 @@
+canvas#graph {
+   border: 1px solid black;
+}
+
+#graph-images img {
+   float: left;
+}
+
+
 #data-log {
    max-height: 200px;
    overflow-y: scroll;

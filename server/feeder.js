@@ -11,7 +11,7 @@ function output()
    var response, 
        rand = random(0, 100);
    
-   if(rand < 20)
+   if(rand < 5)
       response = {code: 200, url: "/bar", honeypot: true, ip: honeypot_ip()};
 
    else if(rand < 90)
@@ -56,5 +56,5 @@ Feeder.prototype.feed = function() {
 
       this.feed();
 
-   }.bind(this), random(100, 1000));
+   }.bind(this), random(10, 300));
 };

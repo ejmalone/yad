@@ -1,4 +1,4 @@
-var HoneypotList = React.createClass({
+var HoneypotTable = React.createClass({
    
    map: null,
 
@@ -12,46 +12,37 @@ var HoneypotList = React.createClass({
       this.map = new google.maps.Map(document.getElementById('map'), mapOptions);
    },
    
-   lookupOrMarkerForIp: function(ip) {
-      
-      if(this.state.data[ip].latitude)
-         this.markerIp(ip);      
+   setMarker: function(ip) {
+     
+      var ipdata = this.state.data[ip];
 
-      else if(!this.state.data[ip].latitude && !this.state.data[ip].ip_error)
-         this.lookupIp(ip);
+      if(!ipdata.latitude)
+         return;
 
-   },
+      if(!this.state.data[ip].latLng) {
+         this.state.data[ip].latLng = new google.maps.LatLng(ipdata.latitude, ipdata.longitude);
+      }
 
-   markerIp: function(ip) {
+      var multiplier = ipdata.count >= 50 ? 50 : ipdata.count;
 
-      var marker = new google.maps.Marker({
-         position: new google.maps.LatLng(this.state.data[ip].latitude, this.state.data[ip].longitude),
+      var circleOptions = {
+         strokeColor: '#FF0000',
+         strokeOpacity: 0.8,
+         strokeWeight: 2,
+         fillColor: '#FF0000',
+         fillOpacity: 0.35,
          map: this.map,
-         title: String(this.state.data[ip].count)
-      });
+         center: this.state.data[ip].latLng,
+         radius: multiplier * 10000
+      };
+
+      if(!this.state.data[ip].marker) 
+         this.state.data[ip].marker = new google.maps.Circle(circleOptions);
+
+      else
+         this.state.data[ip].marker.setOptions(circleOptions);
 
    },
-
-   lookupIp: function(ip) {
-      console.log('will lookup', ip);
-      window.lookup_ip(ip, function(data) {
-         
-         this.state.data[ip].latitude  = data.latitude;
-         this.state.data[ip].longitude = data.longitude;
-         this.state.data[ip].country_code = data.country_code;
-         this.state.data[ip].country_name = data.country_name;
-
-         this.setState(this.state);
-
-         this.markerIp(ip);
-
-      }.bind(this), function(data) {
-         
-         this.state.data[ip].ip_error = true;
-
-      }.bind(this));
-   },
-
 
    getInitialState: function() {
       return {data: {}};
@@ -70,10 +61,21 @@ var HoneypotList = React.createClass({
             this.state.data[data.ip] = {ip: data.ip, count: 1};
          else
             this.state.data[data.ip].count++;
-        
-         this.lookupOrMarkerForIp(data.ip);
 
+         this.setMarker(data.ip);
+        
+         this.setState({data: this.state.data});
+
+      }.bind(this));
+
+      jQuery(document).on('vis.ip_lookup', function(e, data) {
          
+         this.state.data[data.ip].latitude = data.latitude;
+         this.state.data[data.ip].longitude = data.longitude;
+         this.state.data[data.ip].country_name = data.country_name;
+
+         this.setMarker(data.ip);
+
          this.setState({data: this.state.data});
 
       }.bind(this));
@@ -81,17 +83,26 @@ var HoneypotList = React.createClass({
 
 
    render: function() {
-      var createItem = function(data) {
-         return <tr key={data.ip}><td>{data.ip}</td><td>{data.count}</td><td>{data.country_name}</td><td><input type="button" value="Block" /></td></tr>
-      };
-     
+      
+      // create an array of objects so they can be sorted
       var data = [];
+
       for(var i in this.state.data)
          data.push(this.state.data[i]);
       
       data.sort(this.sortByCountMax);
 
-      return <table className="table"><tr><th>IP</th><th>Requests</th><th>Country</th></tr>{data.map(createItem)}</table>;
+      return (
+         <table className="table">
+
+            <tr><th>IP</th><th>Requests</th><th>Country</th></tr>
+
+            {data.map(function(entry) {
+               return <HoneypotListItem key={entry.ip} ip={entry.ip} data={entry} />;
+            })}
+
+         </table>
+      );
    },
 
    sortByCountMax: function(a, b) {
@@ -104,8 +115,50 @@ var HoneypotList = React.createClass({
    }
 });
 
+
+/**
+ * I would have liked to lookup ip and set the state here along with the marker, but 
+ * the HoneypotTable would not pass the map object (not the DOM node, but the actual object) via prop,
+ * nor was I having any luck referencing the map with window.honeypot_map.
+ *
+ * However by doing the ip lookup here, it prevents multiple lookups since it's only done once on 
+ * component load, and the data flow does pass, as React wants, from parent to child.
+ */ 
+var HoneypotListItem = React.createClass({
+   
+   lookupIp: function() {
+
+      window.lookup_ip(this.props.ip, function(data) {
+
+         jQuery(document).trigger('vis.ip_lookup', data);
+
+      }.bind(this), function(data) {
+
+      }.bind(this));
+   },
+
+   componentDidMount: function() {
+      
+      if(this.props.data && !this.props.data.country_name)
+         this.lookupIp();
+   },
+   
+   render: function() {
+
+      return (
+         <tr>
+            <td>{this.props.ip}</td>
+            <td>{this.props.data.count}</td>
+            <td>{this.props.data.country_name}</td>
+            <td><input type="button" value="Block" /></td>
+         </tr>
+      );
+   }
+
+});
+
 $(function() {
-   React.render(<HoneypotList />, document.getElementById('honeypot-list'));
+   React.render(<HoneypotTable />, document.getElementById('honeypot-list'));
 })
 
 

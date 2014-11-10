@@ -1,7 +1,8 @@
 See it in action at http://ericmalone.net/yad/
 
-This is a simple project built over a few days to test out tech I was unfamiliar or not terribly well versed in.
-The idea was to create a modular visualation of log data (HTTP 200s, 5XXs, honeypot hits) and git commits, and offer some basic
+This is a simple project built over a few days to test out tech I was unfamiliar
+or not terribly well versed in. The idea was to create a modular visualation of
+log data (HTTP 200s, 5XXs, honeypot hits) and git commits, and offer some basic
 alerts when something goes wrong.
 
 Technology used includes
@@ -12,4 +13,5 @@ Technology used includes
 * HTML5 canvas, notification, audio
 * Google Maps Javascript API
 
-Copyright 2014 Eric Malone. None of this is worth using but please attribute if you do!
+Copyright 2014 Eric Malone. None of this is worth using but please attribute if 
+you do!

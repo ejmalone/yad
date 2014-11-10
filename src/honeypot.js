@@ -2,6 +2,8 @@ var HoneypotTable = React.createClass({
    
    map: null,
 
+   ajaxHost: '//' + location.host + ':3000',
+
    createMap: function() {
       
       var mapOptions = {
@@ -11,7 +13,81 @@ var HoneypotTable = React.createClass({
 
       this.map = new google.maps.Map(document.getElementById('map'), mapOptions);
    },
-   
+
+   onNewVisData: function(e, data) {
+
+      if(!data.honeypot)
+         return;
+
+      if(!data.ip)
+      {
+         console.error('weird data', data);
+      }
+      
+      if(!this.state.data[data.ip]) {
+         this.state.data[data.ip] = {ip: data.ip, count: 1, latitude: null, longitude: null, blocked: false};
+         this.lookupIp(data.ip);
+      }
+      else
+         this.state.data[data.ip].count++;
+
+      this.setState({data: this.state.data});
+
+   },
+
+   /**
+    * Simple ip geocoder based on work from http://lab.abhinayrathore.com/ipmapper/
+    * extracting out the relevant bits for our own purposes
+    */ 
+   lookupIp: function(ip) {
+        
+      var url = "http://freegeoip.net/json/" + ip + "?callback=?";
+
+      console.log('looking up', ip);
+
+      jQuery.getJSON(url, function(data) {
+         
+         if(jQuery.trim(data.latitude) != '' && data.latitude != '0' && !isNaN(data.latitude)) {
+
+            this.state.data[data.ip].latitude = data.latitude;
+            this.state.data[data.ip].longitude = data.longitude;
+            this.state.data[data.ip].country_name = data.country_name;
+
+            this.setState({data: this.state.data});
+         }
+         else {
+
+            console.error("IP lookup failed for ", ip);
+
+         }
+      }.bind(this));
+   },
+
+   onBlockClickToggle: function(ip) {
+      
+      var postdata = {ip: ip};
+
+      if(!this.state.data[ip].blocked) {
+         this.state.data[ip].blocked = true;
+      }
+      else {
+         this.state.data[ip].blocked = false;
+         postdata._method = 'DELETE';
+      }
+      
+      jQuery.post(this.ajaxHost + '/ipblock', postdata, function() {
+         this.setState({data: this.state.data});
+      }.bind(this));
+      
+   },
+
+   setActiveMarker: function(active_ip) {
+      for(var ip in this.state.data)
+         this.state.data[ip].active = (active_ip == ip);
+     
+      this.setState({data: this.state.data});
+   },
+
    setMarker: function(ip) {
      
       var ipdata = this.state.data[ip];
@@ -33,11 +109,18 @@ var HoneypotTable = React.createClass({
          fillOpacity: 0.35,
          map: this.map,
          center: this.state.data[ip].latLng,
-         radius: multiplier * 10000
+         radius: multiplier * 10000,
+         visible: this.state.data[ip].blocked ? false : true
       };
 
-      if(!this.state.data[ip].marker) 
+      if(!this.state.data[ip].marker) {
          this.state.data[ip].marker = new google.maps.Circle(circleOptions);
+         this.state.data[ip].marker.ip = ip;
+         
+         google.maps.event.addListener(this.state.data[ip].marker, 'click', function() {
+            this.setActiveMarker(ip);
+         }.bind(this));
+      }
 
       else
          this.state.data[ip].marker.setOptions(circleOptions);
@@ -52,53 +135,49 @@ var HoneypotTable = React.createClass({
       
       this.createMap();
 
-      jQuery(document).on('vis.data', function(e, data) {
+      jQuery.post(this.ajaxHost + '/ipblock', {reset: true});
 
-         if(!data.honeypot)
-            return;
-         
-         if(!this.state.data[data.ip])
-            this.state.data[data.ip] = {ip: data.ip, count: 1};
-         else
-            this.state.data[data.ip].count++;
-
-         this.setMarker(data.ip);
-        
-         this.setState({data: this.state.data});
-
-      }.bind(this));
-
-      jQuery(document).on('vis.ip_lookup', function(e, data) {
-         
-         this.state.data[data.ip].latitude = data.latitude;
-         this.state.data[data.ip].longitude = data.longitude;
-         this.state.data[data.ip].country_name = data.country_name;
-
-         this.setMarker(data.ip);
-
-         this.setState({data: this.state.data});
-
-      }.bind(this));
+      jQuery(document).on('vis.data', this.onNewVisData);
    },
 
 
    render: function() {
       
       // create an array of objects so they can be sorted
-      var data = [];
+      var sorted = [];
 
-      for(var i in this.state.data)
-         data.push(this.state.data[i]);
+      for(var ip in this.state.data) {
+         sorted.push(this.state.data[ip]);
+
+         // refresh marker as part of rendering
+         this.setMarker(ip);
+      }
       
-      data.sort(this.sortByCountMax);
+      sorted.sort(this.sortByCountMax);
+
+      // todo: figure out why this isn't available within the map()
+      // see example http://facebook.github.io/react/tips/communicate-between-components.html
+      var onclick = this.onBlockClickToggle;
+      var self = this;
 
       return (
          <table className="table">
 
-            <tr><th>IP</th><th>Requests</th><th>Country</th></tr>
+            <tr><th>IP</th><th># Reqs</th><th>Country</th></tr>
 
-            {data.map(function(entry) {
-               return <HoneypotListItem key={entry.ip} ip={entry.ip} data={entry} />;
+            {sorted.map(function(entry) {
+
+               var rowClassString = entry.active ? 'active' : '';
+               var buttonTitle = entry.blocked ? 'Unblock' : 'Block';
+
+               return (
+                  <tr key={entry.ip} className={rowClassString}>
+                     <td>{entry.ip}</td>
+                     <td>{entry.count}</td>
+                     <td>{entry.country_name}</td>
+                     <td><button type="button" className="btn btn-sm" onClick={onclick.bind(self, entry.ip)}>{buttonTitle}</button></td>
+                  </tr>
+               );
             })}
 
          </table>
@@ -116,78 +195,6 @@ var HoneypotTable = React.createClass({
 });
 
 
-/**
- * I would have liked to lookup ip and set the state here along with the marker, but 
- * the HoneypotTable would not pass the map object (not the DOM node, but the actual object) via prop,
- * nor was I having any luck referencing the map with window.honeypot_map.
- *
- * However by doing the ip lookup here, it prevents multiple lookups since it's only done once on 
- * component load, and the data flow does pass, as React wants, from parent to child.
- */ 
-var HoneypotListItem = React.createClass({
-   
-   lookupIp: function() {
-
-      window.lookup_ip(this.props.ip, function(data) {
-
-         jQuery(document).trigger('vis.ip_lookup', data);
-
-      }.bind(this), function(data) {
-
-      }.bind(this));
-   },
-
-   componentDidMount: function() {
-      
-      if(this.props.data && !this.props.data.country_name)
-         this.lookupIp();
-   },
-   
-   render: function() {
-
-      return (
-         <tr>
-            <td>{this.props.ip}</td>
-            <td>{this.props.data.count}</td>
-            <td>{this.props.data.country_name}</td>
-            <td><input type="button" value="Block" /></td>
-         </tr>
-      );
-   }
-
-});
-
 $(function() {
    React.render(<HoneypotTable />, document.getElementById('honeypot-list'));
 })
-
-
-
-/**
- * Simple ip geocoder based on work from http://lab.abhinayrathore.com/ipmapper/
- * extracting out the relevant bits for our own purposes
- */ 
-function lookup_ip(ip, callback, failure) {
-  
-   callback = callback || function() {};
-   failure  = failure || function() {};
-
-   var url = "http://freegeoip.net/json/" + ip + "?callback=?";
-
-   jQuery.getJSON(url, function(data) {
-      
-      if(jQuery.trim(data.latitude) != '' && data.latitude != '0' && !isNaN(data.latitude)) {
-
-         // data includes ip, country_code, latitude, longitude
-         callback(data);
-
-      }
-      else {
-
-         console.error("IP lookup failed for " . ip);
-         failure({ip: ip, success: false});
-
-      }
-   });
-
-};

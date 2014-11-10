@@ -23,6 +23,11 @@ canvas#graph {
    padding: 2px;
 }
 
+#honeypot-list td.ip_clickable {
+   cursor: pointer;
+   text-decoration: underline;
+}
+
 
 #data-log {
    max-height: 200px;

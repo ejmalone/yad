@@ -81,6 +81,28 @@ var HoneypotTable = React.createClass({
       
    },
 
+   onIpClick: function(ip) {
+      var marker = this.state.data[ip].marker;
+      
+      if(this.state.data[ip].active || !marker)
+         return;
+
+      var pan_and_zoom = function(_marker) {
+         this.map.panTo(_marker.getCenter());
+         this.map.setZoom(4);
+      }.bind(this, marker);
+
+      // forcing zoom out first allows for the fun transition
+      if(this.map.getZoom() > 2) {
+         this.map.setZoom(2);
+         setTimeout(pan_and_zoom, 700);
+      }
+      else 
+         pan_and_zoom();
+      
+      this.setActiveMarker(ip);
+   },
+
    setActiveMarker: function(active_ip) {
       for(var ip in this.state.data)
          this.state.data[ip].active = (active_ip == ip);
@@ -157,28 +179,34 @@ var HoneypotTable = React.createClass({
 
       // todo: figure out why this isn't available within the map()
       // see example http://facebook.github.io/react/tips/communicate-between-components.html
-      var onclick = this.onBlockClickToggle;
+      var onBlockclick = this.onBlockClickToggle;
+      var onIpClick = this.onIpClick;
       var self = this;
 
       return (
          <table className="table">
 
-            <tr><th>IP</th><th># Reqs</th><th>Country</th></tr>
+            <thead>
+               <tr><th>IP</th><th># Reqs</th><th>Country</th></tr>
+            </thead>
 
-            {sorted.map(function(entry) {
+            <tbody>
+               {sorted.map(function(entry) {
 
-               var rowClassString = entry.active ? 'active' : '';
-               var buttonTitle = entry.blocked ? 'Unblock' : 'Block';
+                  var rowClassString = entry.active ? 'active' : '';
+                  var buttonTitle = entry.blocked ? 'Unblock' : 'Block';
+                  var ipClass = entry.latitude ? 'ip_clickable' : '';
 
-               return (
-                  <tr key={entry.ip} className={rowClassString}>
-                     <td>{entry.ip}</td>
-                     <td>{entry.count}</td>
-                     <td>{entry.country_name}</td>
-                     <td><button type="button" className="btn btn-sm" onClick={onclick.bind(self, entry.ip)}>{buttonTitle}</button></td>
-                  </tr>
-               );
-            })}
+                  return (
+                     <tr key={entry.ip} className={rowClassString}>
+                        <td onClick={onIpClick.bind(self, entry.ip)} className={ipClass}>{entry.ip}</td>
+                        <td>{entry.count}</td>
+                        <td>{entry.country_name}</td>
+                        <td><button type="button" className="btn btn-sm" onClick={onBlockclick.bind(self, entry.ip)}>{buttonTitle}</button></td>
+                     </tr>
+                  );
+               })}
+            </tbody>
 
          </table>
       );

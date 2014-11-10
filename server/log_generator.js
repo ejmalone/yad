@@ -1,5 +1,6 @@
 var util  = require('util'),
     EventEmitter = require('events').EventEmitter;
+var crypto = require('crypto');
 
 function random(low, high)
 {
@@ -43,6 +44,7 @@ LogGenerator.prototype.run = function() {
       this.run();
 
    }.bind(this), random(10, 250));
+   
 };
 
 LogGenerator.prototype.blockIp = function(ip) {
@@ -99,7 +101,96 @@ LogGenerator.prototype.generateLog = function() {
    return JSON.stringify(response);
 };
 
-
 LogGenerator.prototype.randomIp = function() {
    return random(1, 255) + '.' + random(1, 255) + '.' + random(1,255) + '.' + random(1, 255);
 }
+
+LogGenerator.prototype.devs = [
+
+   {
+      name: 'Gordon',
+      email: 'gordon@myco.co',
+      avatar: 'http://ericmalone.net/dummyimage/100x100/a9a9a9/fff&text=gordon'
+   },
+
+   {
+      name: 'Julia',
+      email: 'julia@myco.com',
+      avatar: 'http://ericmalone.net/dummyimage/100x100/a9a9a9/fff&text=julia'
+   },
+
+   {
+      name: 'Anthony',
+      email: 'anthony@myco.com',
+      avatar: 'http://ericmalone.net/dummyimage/100x100/a9a9a9/fff&text=anthony'
+   },
+
+   {
+      name: 'Christopher',
+      email: 'christopher@myco.com',
+      avatar: 'http://ericmalone.net/dummyimage/100x100/a9a9a9/fff&text=christopher'
+   }
+
+];
+
+LogGenerator.prototype.karl = {
+   name: 'Karl',
+   email: 'karl@myco.com',
+   avatar: 'http://ericmalone.net/dummyimage/100x100/a9a9a9/fff&text=karl'
+}
+
+LogGenerator.prototype.generateCommit = function(opts) {
+  
+   if(opts == undefined)
+      opts = {};
+
+   var isKarl = opts.isKarl;
+   var emit = opts.emit;
+
+   // fudging time to a few seconds in the past so we have an element on the page to 
+   // attach to. 
+   
+   var diff = "index 0d8ba84..83a9b15 100644 \n--- a/css/style.css\n+++ b/css/style.css\n@@ -23,6 +23,11 @@ canvas#graph {\npadding: 2px;\n\n\n)\n+#honeypot-list td.ip_clickable {\n\n +   cursor: pointer;\n+  text-decoration: underline;\n}\n";
+   var response = {
+      sha: this.generateSha(), 
+      dev: (isKarl ? this.karl : this.randomDev()), 
+      time: Math.floor(new Date().getTime() / 1000) - 5,
+      date: new Date().toGMTString(),
+      diff: diff,
+      message: "Look ma! No review"
+   };
+   
+   response = JSON.stringify(response);
+
+   if(emit)
+     this.emit('commit', response);
+   else
+      return response;
+};
+
+LogGenerator.prototype.generateCommits = function() {
+   setTimeout(function() {
+
+      this.emit('commit', this.generateCommit());
+
+      this.generateCommits();
+
+   }.bind(this), random(45000, 120000));
+};
+
+/**
+ * sourced from http://stackoverflow.com/questions/9407892/how-to-generate-random-sha1-hash-to-use-as-id-in-node-js
+ */
+LogGenerator.prototype.generateSha = function() {
+   return crypto.createHash('sha1').update(Math.random().toString()).digest('hex').substring(0, 6);
+}
+
+LogGenerator.prototype.randomDev = function() {
+   return this.devs[random(0,this.devs.length)];
+}
+
+LogGenerator.prototype.getCommitFile = function(sha, callback) {
+
+   // load file...
+   callback("blah blah blah blah blah");
+};

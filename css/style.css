@@ -1,8 +1,16 @@
-/* keep it off the page */
+/* keep canvas off the page */
 canvas#graph {
    position: absolute;
    left: -500px;
    top: -500px;
+}
+
+#scroll-legend {
+   text-align: right;
+}
+
+@media screen and (max-width: 767px) {
+   #scroll-legend: text-align: left;
 }
 
 #graph-images {
@@ -36,4 +44,14 @@ canvas#graph {
 
 #map {
    height: 400px;
+}
+
+.commit i.fa-github {
+   cursor: pointer;
+   display: block;
+   text-align: center;
+}
+
+.commit .body {
+   display: none;
 }

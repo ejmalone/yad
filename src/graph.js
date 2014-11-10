@@ -15,6 +15,12 @@ Graph.prototype = {
    canvas: null,
    context: null,
 
+   isScrolling: true,
+
+   /**
+    * The starting and ending times (in seconds) for which the graph making its current
+    * logging pass.
+    */
    startTime: null, 
    endTime: null,
 
@@ -39,10 +45,14 @@ Graph.prototype = {
 
       this.buildCanvas();
       this.addListeners();
+
+      jQuery('#scroll-with-graph').prop('checked', true);
    },
 
    addListeners: function() {
       jQuery(document).on('vis.data', this.onReceiveData.bind(this));
+      jQuery('#graph-images').on('stop', this.onStopRequested.bind(this));
+      jQuery('#scroll-with-graph').on('change', this.onScrollClick.bind(this));
       
       setInterval(this.onInterval.bind(this), Graph.consts.REFRESH);
    },
@@ -94,33 +104,28 @@ Graph.prototype = {
     * Builds an image from the current state of the canvas and saves to the list of images
     * Referencing https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement.toDataURL
     */
-   buildImage: function() {
-      var dataUrl = this.canvas.toDataURL();
+   buildImage: function(startTime, endTime) {
 
-      var img = jQuery('<img />');
+      var dataUrl = this.canvas.toDataURL(),
+          img     = jQuery('<img />');
       
       // use an onload to prevent 'FOUC' with unloaded image appended to the list
       img.on('load', function() {
-         var li = jQuery('<li></li>').append(img);
+         var li = jQuery('<li></li>').attr({'data-start': startTime, 'data-end': endTime}).append(img);
 
          // increase width of the <ul> containing the image slices so that it will scroll nicely horizontally.
          // adding the 200px for the right side padding  a 50px fudge so that the <li>'s will never stack
          jQuery('#graph-images ul').append(li).css('width', jQuery('#graph-images ul li').length * 50 + 200 + 50 + 'px');
-
-         setTimeout(function() {
-            jQuery('#graph-images').scrollTo('100%');
-         }, 200);
-      });
+         
+         if(this.isScrolling) {
+            setTimeout(function() {
+               jQuery('#graph-images').scrollTo('100%');
+            }, 200);
+         }
+      }.bind(this));
 
       img.attr('src', dataUrl);
 
-      // reset the canvas
-      this.canvas.width = this.canvas.width;
-   },
-
-   reset: function() {
-      this.startTime = null;
-      this.endTime = null;
    },
 
    /** Event Listeners **/
@@ -142,6 +147,15 @@ Graph.prototype = {
       }
    },
 
+   onStopRequested: function(e) {
+      this.isScrolling = false;
+      jQuery('#scroll-with-graph').prop('checked', false);
+   },
+
+   onScrollClick: function(e) {
+      this.isScrolling = jQuery(e.target).prop('checked');
+   },
+
    onInterval: function() {
        
       // reset buffers before spending time drawing to prevent loss of data
@@ -150,14 +164,16 @@ Graph.prototype = {
 
       var startTime = this.startTime,
           endTime   = this.endTime;
-
+      
       this.startTime = null;
       this.endTime = null;
 
       this.draw(startTime, endTime);
 
-      this.buildImage();
+      this.buildImage(startTime, endTime);
       
+      // reset the canvas
+      this.canvas.width = this.canvas.width;
    }
 
 }

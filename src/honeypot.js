@@ -43,7 +43,7 @@ var HoneypotTable = React.createClass({
         
       var url = "http://freegeoip.net/json/" + ip + "?callback=?";
 
-      console.log('looking up', ip);
+      // console.log('looking up', ip);
 
       jQuery.getJSON(url, function(data) {
          

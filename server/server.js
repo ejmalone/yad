@@ -44,18 +44,37 @@ function handler (req, res) {
 
    router.register('/ipblock', ipblock);
 
+   router.register('/karl', router.POST, function(req, res) {
+      
+      generator.generateCommit({emit: true, isKarl: true});
+      res.end();
+
+   });
+
 
    router.route(req, res);
 }
 
 var generator = new LogGenerator();
 generator.run();
+generator.generateCommits();
 
 io.sockets.on('connection', function (socket) {
 
    generator.on('log', function(data) {
-      socket.emit('request', data);
-      console.log('request', data);
+      socket.emit('log', data);
+      // console.log('log', data);
+   });
+
+   generator.on('commit', function(data) {
+      socket.emit('commit', data);
+      console.log('emitting commit', data);
+   });
+
+   socket.on('commit_file_request', function(data) {
+      generator.getCommit(data, function(details) {
+         socket.emit('commit_file', details);
+      });
    });
 
 });

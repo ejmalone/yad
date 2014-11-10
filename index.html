@@ -11,6 +11,8 @@
       <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
       <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap-theme.min.css">
 
+      <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+
       <link rel="stylesheet" href="css/style.css">
 
    </head>
@@ -20,10 +22,18 @@
       <div class="container">
       
          <h3>Real Time Data</h3>
-         <div id="real-time-legend">
-            <button class="btn btn-success btn-sm">200 OK</button>
-            <button class="btn btn-danger btn-sm">5XX ERROR</button>
-            <button class="btn btn-warning btn-sm">HONEYPOT REQUEST</button>
+         <div id="real-time-legend" class="row">
+         
+            <div class="col-xs-12 col-md-8">
+               <button class="btn btn-success btn-sm">200 OK</button>
+               <button class="btn btn-danger btn-sm">5XX ERROR</button>
+               <button class="btn btn-warning btn-sm">HONEYPOT REQUEST</button>
+            </div>
+
+            <div class="col-xs-12 col-md-4" id="scroll-legend">
+               <input type="checkbox" id="scroll-with-graph" checked="checked">
+               <label for="scroll-with-graph">Scroll with Graph</label>
+            </div>
          </div>
 
          <div id="graph-images" class="row">
@@ -65,6 +75,7 @@
 
       <!-- If JSX is running -->
          <script src="build/honeypot.js"></script>
+         <script src="build/commit.js"></script>
          <script src="build/graph.js"></script>
       
       <!-- Else use this and replace all build/ with src/ and set type="text/jsx" for ReactJS scripts
@@ -73,30 +84,45 @@
       
       <script>
          
-         var socket = io('http://ericmalone.net:3000/');
-
-         socket.on('request', function(data) {
-
+         function parse_socket_data(raw) {
             var obj;
 
             try {
-               if(typeof data == 'string')
-                  obj = JSON.parse(data);
+               if(typeof raw == 'string')
+                  obj = JSON.parse(raw);
                else
-                  obj = data;
+                  obj = raw;
 
             } catch(e) {
                console.error("Exception in parsing JSON in socket.on('request')", e.message, data);
                obj = {};
             }
+            
+            return obj;
+         }
+
+         var socket = io('http://ericmalone.net:3000/');
+
+         socket.on('log', function(data) {
+
+            var obj = parse_socket_data(data);
 
             if(obj.code && obj.url) {
                jQuery('#data-log').prepend(data + '<br />');
                jQuery(document).trigger('vis.data', obj);
             }
-            else
-               console.error("Invalid request data for socket.on('request')", typeof(data), data);
+         });
 
+         // Dynamically generating react elements with javascript
+         socket.on('commit', function(data) {
+            var obj = parse_socket_data(data);
+
+            if(obj.sha) {
+               jQuery('#data-log').prepend(data + '<br />');
+               var div = jQuery('<div></div>').addClass('commit-wrap').appendTo(document.body);
+               React.render(React.createElement(Commit, obj), div.get(0));
+            }
+            
          });
             
       </script>

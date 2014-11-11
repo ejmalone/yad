@@ -53,7 +53,11 @@ function handler (req, res) {
 
    router.register('/karl', router.DELETE, function(req, res) {
       
-      generator.unsetKarlMode();
+      var opts = {};
+      if(req.body.no_commit)
+         opts.no_commit = true;
+
+      generator.unsetKarlMode(opts);
       res.end();
 
    });

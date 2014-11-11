@@ -218,6 +218,8 @@
             // set initial state since firefox likes to keep it
             jQuery('#karl-commit').removeAttr('disabled');
             jQuery('#recover-from-karl').attr('disabled', 'disabled');
+
+            jQuery.post('http://ericmalone.net:3000/karl', {_method: 'DELETE', commit: false});
          
             jQuery('#karl-commit').click(function() { 
                

@@ -202,7 +202,9 @@ LogGenerator.prototype.setKarlMode = function() {
    this.generateCommit({emit: true, isKarl: true});
 };
 
-LogGenerator.prototype.unsetKarlMode = function() {
+LogGenerator.prototype.unsetKarlMode = function(opts) {
    this.isKarlMode = false;
-   this.generateCommit({emit: true, message: "Fixed that idiot's mistake. Dammit Karl. >:("});
+
+   if(!opts || !opts.no_commit)
+      this.generateCommit({emit: true, message: "Fixed that idiot's mistake. Dammit Karl. >:("});
 };

@@ -49,20 +49,24 @@
                   The idea was to create a modular visualization of log data (HTTP 200s, 5XXs, honeypot hits) and git commits, and offer some basic
                   alerts when something goes wrong.</p>
 
-                  <p>A simple <a href="http://nodejs.org/" target="_blank">Node.js</a> server is pumping out fake log data in JSON format 
+                  <p>A simple <a href="http://nodejs.org/" target="_blank">Node.js</a> 
+                  <a href="https://github.com/ejmalone/yad/blob/master/server/server.js" target="_blank"><i class="fa fa-github"></i> server</a> 
+                  is pumping out fake log data in JSON format 
                   over a websocket via <a href="http://socket.io/" target="_blank">socket.io</a>. This page is 
-                  capturing that data and triggering page level events for every log item so that several disparate pieces of code can interact
-                  with it.</p>
+                  capturing that data and triggering page level events for every log item so that several loosely coupled modules can interact
+                  with them.</p>
 
-                  <p>An Object Oriented Javascript library is capturing log events and storing them in its buffers. Every few seconds it
-                  draws onto a hidden canvas and then creates a PNG data uri. The PNG is appended to the real time list. The idea here was
-                  to avoid having a long living canvas that had to be resized, as well as minimizing the amount of state kept on the page.
+                  <p>An Object Oriented <a href="https://github.com/ejmalone/yad/blob/master/src/graph.js" target="_blank"><i class="fa fa-github"></i> Javascript library</a> 
+                  is capturing log events and storing them in its buffers. Every few seconds it
+                  draws onto a hidden canvas and then creates a PNG data URI. The PNG is appended to the 'real time' list. The idea here was
+                  to avoid having a long living canvas that had to be resized, as well as minimizing the amount of state kept within the library.
                   </p>
                   
                   <p>A <a href="http://facebook.github.io/react/" target="_blank">React component</a>
                   is listening for <a href="http://en.wikipedia.org/wiki/Honeypot_%28computing%29" target="_blank">honeypot requests</a>
                   and keeping track of the hits by IP address, geolocating them and displaying on the Google Map. The hit locations
-                  grow on the map, and the user has the ability to block each IP address.</p>
+                  grow on the map, and the user has the ability to block each IP address. 
+                  That library is <a href="https://github.com/ejmalone/yad/blob/master/src/honeypot.js" target="_blank"><i class="fa fa-github"></i> here</a>.</p>
 
                   <p>In addition to log events the Node server emits commit events that are displayed along the real time graph. If error levels
                   increase significantly, the user can look to see if there's a causal relationship.</p>
@@ -88,6 +92,7 @@
             <div role="tabpanel" class="tab-pane" id="todo">
                <div class="well">
                   <ul>
+                     <li>Lots of error condition checking</li>
                      <li>Finish the React panels for each commit message</li>
                      <li>Improve the real time graph to emphasize the differences in 200s vs 5xxs (add counts to right side of graph)</li>
                      <li>Create the real time chat React UI (or maybe do it in Angular)</li>

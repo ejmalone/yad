@@ -83,14 +83,16 @@ LogGenerator.prototype.honeypotIp = function() {
 };
 
 LogGenerator.prototype.generateLog = function() {
+
    var response, 
        rand = random(0, 100),
-       honeypotIp = this.honeypotIp();
+       honeypotIp = this.honeypotIp(),
+       errThreshold = this.isKarlMode ? 90 : 15; 
 
    if(rand < 3 && honeypotIp)
       response = {code: 200, url: "/honeypot", honeypot: true, ip: honeypotIp};
 
-   else if(rand < 15)
+   else if(rand < errThreshold)
       response = {code: 500, url: "/bar", ip: this.randomIp()};
 
    else
@@ -144,25 +146,22 @@ LogGenerator.prototype.generateCommit = function(opts) {
    if(opts == undefined)
       opts = {};
 
-   var isKarl = opts.isKarl;
-   var emit = opts.emit;
-
    // fudging time to a few seconds in the past so we have an element on the page to 
    // attach to. 
    
    var diff = "index 0d8ba84..83a9b15 100644 \n--- a/css/style.css\n+++ b/css/style.css\n@@ -23,6 +23,11 @@ canvas#graph {\npadding: 2px;\n\n\n)\n+#honeypot-list td.ip_clickable {\n\n +   cursor: pointer;\n+  text-decoration: underline;\n}\n";
    var response = {
       sha: this.generateSha(), 
-      dev: (isKarl ? this.karl : this.randomDev()), 
+      dev: (opts.isKarl ? this.karl : this.randomDev()), 
       time: Math.floor(new Date().getTime() / 1000) - 5,
       date: new Date().toGMTString(),
       diff: diff,
-      message: "Look ma! No review"
+      message: opts.message || "Look ma! No review"
    };
    
    response = JSON.stringify(response);
 
-   if(emit)
+   if(opts.emit)
      this.emit('commit', response);
    else
       return response;
@@ -183,14 +182,27 @@ LogGenerator.prototype.generateCommits = function() {
  */
 LogGenerator.prototype.generateSha = function() {
    return crypto.createHash('sha1').update(Math.random().toString()).digest('hex').substring(0, 6);
-}
+};
 
 LogGenerator.prototype.randomDev = function() {
    return this.devs[random(0,this.devs.length)];
-}
+};
 
 LogGenerator.prototype.getCommitFile = function(sha, callback) {
 
    // load file...
    callback("blah blah blah blah blah");
+};
+
+LogGenerator.prototype.isKarlMode = false;
+
+
+LogGenerator.prototype.setKarlMode = function() {
+   this.isKarlMode = true;
+   this.generateCommit({emit: true, isKarl: true});
+};
+
+LogGenerator.prototype.unsetKarlMode = function() {
+   this.isKarlMode = false;
+   this.generateCommit({emit: true, message: "Fixed that idiot's mistake. Dammit Karl. >:("});
 };

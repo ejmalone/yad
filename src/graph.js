@@ -7,7 +7,9 @@ Graph.consts = {
    REFRESH: 7000,
 
    HTTP_OK: 200,
-   HTTP_ERR: 500
+   HTTP_ERR: 500,
+
+   ERR_MSG: "Warning - there are usually large number of errors!"
 }
 
 Graph.prototype = {
@@ -34,11 +36,14 @@ Graph.prototype = {
 
    buffers: [],
 
+   unusualErrorCount: 0,
+   errorsLimitForNotification: 2,
+
    init: function() {
 
-      this.oksBuffer   = new LineBuffer({color: '#5cb85c', heightOffset: 100, debug: true});
-      this.errsBuffer  = new LineBuffer({color: '#d9534f', heightOffset: 50});
-      this.honeyBuffer = new LineBuffer({color: '#f0ad4e', heightOffset: 10});
+      this.oksBuffer   = new LineBuffer({color: '#5cb85c', heightOffset: 100, countId: '#count-oks'});
+      this.errsBuffer  = new LineBuffer({color: '#d9534f', heightOffset: 50, countId: '#count-5xx'});
+      this.honeyBuffer = new LineBuffer({color: '#f0ad4e', heightOffset: 10, countId: '#count-pots'});
 
       this.buffers = [this.oksBuffer, this.errsBuffer, this.honeyBuffer];
 
@@ -47,6 +52,10 @@ Graph.prototype = {
       this.addListeners();
 
       jQuery('#scroll-with-graph').prop('checked', true);
+
+      // get notifications ready
+      if(window.Notification && window.Notification.permission != 'granted')
+         Notification.requestPermission();
    },
 
    addListeners: function() {
@@ -92,6 +101,8 @@ Graph.prototype = {
             
             lastY = count;
          }
+         
+         buff.showRequestTotal();
 
          buff.lastY = lastY;
 
@@ -115,7 +126,9 @@ Graph.prototype = {
 
          // increase width of the <ul> containing the image slices so that it will scroll nicely horizontally.
          // adding the 200px for the right side padding  a 50px fudge so that the <li>'s will never stack
-         jQuery('#graph-images ul').append(li).css('width', jQuery('#graph-images ul li').length * 50 + 200 + 50 + 'px');
+         li.insertBefore('#graph-counts');
+
+         jQuery('#graph-images ul').css('width', jQuery('#graph-images ul li').length * 50 + 200 + 50 + 'px');
          
          if(this.isScrolling) {
             setTimeout(function() {
@@ -126,6 +139,39 @@ Graph.prototype = {
 
       img.attr('src', dataUrl);
 
+   },
+
+   notifyIfUnusualErrors: function() {
+
+      if(this.errsBuffer.queuedRequestCount() > this.oksBuffer.queuedRequestCount()) {
+      
+         ++this.sigErrorsCount;
+
+          // alert then reset the errors count for the next time
+         if(this.sigErrorsCount >= this.errorsLimitForNotification) {
+            this.notifyErrorSituation();
+            this.sigErrorsCount = 0; 
+         }
+      }
+      else
+         this.sigErrorsCount = 0;
+   },
+
+   /**
+    * Play audio and notify the user
+    * via https://developer.mozilla.org/en-US/docs/Web/API/notification
+    */
+   notifyErrorSituation: function() {
+      
+      if(window.Notification && window.Notification.permission == 'granted')
+         new Notification(Graph.consts.ERR_MSG);
+      else 
+         alert(Graph.consts.ERR_MSG);
+
+      var alert_notification = document.getElementById('alert_notification');
+
+      if(alert_notification.play)
+         alert_notification.play();
    },
 
    /** Event Listeners **/
@@ -170,6 +216,8 @@ Graph.prototype = {
 
       this.draw(startTime, endTime);
 
+      this.notifyIfUnusualErrors();
+
       this.buildImage(startTime, endTime);
       
       // reset the canvas
@@ -184,6 +232,7 @@ LineBuffer = function(opts) {
       this.color = opts.color;
       this.debug = opts.debug;
       this.heightOffset = opts.heightOffset;
+      this.countId = opts.countId;
    }
 
 };
@@ -205,6 +254,8 @@ LineBuffer.prototype = {
    
    color: '#000000',
 
+   coundId: '',
+
    heightOffset: 0,
 
    debug: false,
@@ -225,6 +276,23 @@ LineBuffer.prototype = {
       this.queuedForWork = jQuery.extend({}, this.buffer);
 
       this.buffer = {};
+   },
+
+   queuedRequestCount: function() {
+      
+      var total = 0;
+
+      for(i in this.queuedForWork) {
+         total += this.queuedForWork[i];
+      }
+
+      return total;
+   },
+
+   showRequestTotal: function() {
+      
+      if(this.countId)
+         jQuery(this.countId).text(this.queuedRequestCount());
    },
 
    push: function(data) {

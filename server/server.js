@@ -11,7 +11,7 @@ function handler (req, res) {
    
    router.register('/', router.GET, function(req, res) {
 
-      fs.readFile('/var/www/vis/index.html',// __dirname + '/index.html',
+      fs.readFile('/var/www/yad/index.html',// __dirname + '/index.html',
          function (err, data) {
             if (err) {
                res.writeHead(500);
@@ -46,7 +46,14 @@ function handler (req, res) {
 
    router.register('/karl', router.POST, function(req, res) {
       
-      generator.generateCommit({emit: true, isKarl: true});
+      generator.setKarlMode();
+      res.end();
+
+   });
+
+   router.register('/karl', router.DELETE, function(req, res) {
+      
+      generator.unsetKarlMode();
       res.end();
 
    });

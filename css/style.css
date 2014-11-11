@@ -41,6 +41,18 @@ canvas#graph {
    float: left;
 }
 
+#graph-images li#graph-counts {
+   height: 170px;
+   font-weight: bold;
+   padding-left: 10px;
+}
+
+/* todo: remove this ghetto hack to vertically center text */
+#graph-images li#graph-counts div {
+   height: 52px;
+   line-height: 70px;
+}
+
 #honeypot-list td {
    padding: 2px;
 }

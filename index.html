@@ -113,7 +113,13 @@
          </div>
 
          <div id="graph-images" class="row">
-            <ul></ul>
+            <ul>
+               <li id="graph-counts">
+                  <div id="count-oks"></div>
+                  <div id="count-5xx"></div>
+                  <div id="count-pots"></div>
+               </li>
+            </ul>
          </div>
         
          <br>
@@ -208,6 +214,10 @@
 
 
          jQuery(function() {
+            
+            // set initial state since firefox likes to keep it
+            jQuery('#karl-commit').removeAttr('disabled');
+            jQuery('#recover-from-karl').attr('disabled', 'disabled');
          
             jQuery('#karl-commit').click(function() { 
                

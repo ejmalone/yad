@@ -1,3 +1,17 @@
+body {
+   padding-bottom: 20px;
+}
+
+#back-home {
+   float: right;
+   font-weight: bold;
+}
+
+.tab-pane {
+   padding: 10px;
+   border-bottom: 1px solid rgb(221, 221, 221);
+}
+
 /* keep canvas off the page */
 canvas#graph {
    position: absolute;
@@ -38,7 +52,7 @@ canvas#graph {
 
 
 #data-log {
-   max-height: 200px;
+   max-height: 150px;
    overflow-y: scroll;
 }
 

@@ -14,12 +14,88 @@
       <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 
       <link rel="stylesheet" href="css/style.css">
+      
+      <script type="text/javascript">
+
+		  var _gaq = _gaq || [];
+		  _gaq.push(['_setAccount', 'UA-4881250-1']);
+		  _gaq.push(['_trackPageview']);
+
+		  (function() {
+			 var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			 ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			 var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		  })();
+
+		</script>
 
    </head>
 
    <body>
       
       <div class="container">
+			
+         <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation"><a href="#overview" role="tab" data-toggle="tab">Overview</a></li>
+            <li role="presentation"><a href="#karl-demo" role="tab" data-toggle="tab">Karl demo</a></li>
+            <li role="presentation"><a href="#todo" role="tab" data-toggle="tab">To do</a></li>
+            <li role="presentation" id="back-home"><a href="/" role="tab">Home</a></li>
+         </ul>
+
+         <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade" id="overview">
+               <div class="well">
+                  <p>This is a simple project built over a few days to test out tech I was unfamiliar or not terribly well versed in.
+                  The idea was to create a modular visualization of log data (HTTP 200s, 5XXs, honeypot hits) and git commits, and offer some basic
+                  alerts when something goes wrong.</p>
+
+                  <p>A simple <a href="http://nodejs.org/" target="_blank">Node.js</a> server is pumping out fake log data in JSON format 
+                  over a websocket via <a href="http://socket.io/" target="_blank">socket.io</a>. This page is 
+                  capturing that data and triggering page level events for every log item so that several disparate pieces of code can interact
+                  with it.</p>
+
+                  <p>An Object Oriented Javascript library is capturing log events and storing them in its buffers. Every few seconds it
+                  draws onto a hidden canvas and then creates a PNG data uri. The PNG is appended to the real time list. The idea here was
+                  to avoid having a long living canvas that had to be resized, as well as minimizing the amount of state kept on the page.
+                  </p>
+                  
+                  <p>A <a href="http://facebook.github.io/react/" target="_blank">React component</a>
+                  is listening for <a href="http://en.wikipedia.org/wiki/Honeypot_%28computing%29" target="_blank">honeypot requests</a>
+                  and keeping track of the hits by IP address, geolocating them and displaying on the Google Map. The hit locations
+                  grow on the map, and the user has the ability to block each IP address.</p>
+
+                  <p>In addition to log events the Node server emits commit events that are displayed along the real time graph. If error levels
+                  increase significantly, the user can look to see if there's a causal relationship.</p>
+                  
+                  <p>The log data is also output at the bottom of the page.</p> 
+
+                  <p>Source code available at <a href="https://github.com/ejmalone/yad" target="_blank">github.com/ejmalone/yad</a>.</p>
+               </div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane" id="karl-demo">
+               <div class="well">
+                  What happens when you let Karl Pilkington commit code? Click the 'commit code' button.
+
+                  <br><br>
+
+                  <button id="karl-commit" type="button" class="btn btn-danger">Commit Code</button>
+                  <button id="recover-from-karl" type="button" class="btn btn-primary" disabled="disabled">Recover From His Mistake</button>
+               </div>
+
+            </div>
+
+            <div role="tabpanel" class="tab-pane" id="todo">
+               <div class="well">
+                  <ul>
+                     <li>Finish the React panels for each commit message</li>
+                     <li>Improve the real time graph to emphasize the differences in 200s vs 5xxs (add counts to right side of graph)</li>
+                     <li>Create the real time chat React UI (or maybe do it in Angular)</li>
+                  </ul>
+               </div>
+            </div>
+			</div>
+
       
          <h3>Real Time Data</h3>
          <div id="real-time-legend" class="row">
@@ -62,6 +138,11 @@
 
       </div>
 
+
+      <audio id="alert_notification" preload>
+         <source src="alert.mp3">
+      </audio>
+         
       <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
       <script src="build/jquery.scrollTo.min.js"></script>
 
@@ -123,6 +204,26 @@
                React.render(React.createElement(Commit, obj), div.get(0));
             }
             
+         });
+
+
+         jQuery(function() {
+         
+            jQuery('#karl-commit').click(function() { 
+               
+               jQuery('#karl-commit').attr('disabled', 'disabled');
+               jQuery('#recover-from-karl').removeAttr('disabled');
+               
+               jQuery.post('http://ericmalone.net:3000/karl');
+            });
+
+            jQuery('#recover-from-karl').click(function() {
+               jQuery('#karl-commit').removeAttr('disabled');
+               jQuery('#recover-from-karl').attr('disabled', 'disabled');
+               
+               jQuery.post('http://ericmalone.net:3000/karl', {_method: 'DELETE'});
+               
+            });
          });
             
       </script>

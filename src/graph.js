@@ -1,3 +1,7 @@
+/**
+ * todo: figure out why the first time we process the number of requests,
+ * all buffers show the same value.
+ */
 function Graph() {
    jQuery(this.init.bind(this));
 }
@@ -39,6 +43,8 @@ Graph.prototype = {
    unusualErrorCount: 0,
    errorsLimitForNotification: 2,
 
+   interval: null,
+
    init: function() {
 
       this.oksBuffer   = new LineBuffer({color: '#5cb85c', heightOffset: 100, countId: '#count-oks'});
@@ -63,7 +69,7 @@ Graph.prototype = {
       jQuery('#graph-images').on('stop', this.onStopRequested.bind(this));
       jQuery('#scroll-with-graph').on('change', this.onScrollClick.bind(this));
       
-      setInterval(this.onInterval.bind(this), Graph.consts.REFRESH);
+      this.interval = setInterval(this.onInterval.bind(this), Graph.consts.REFRESH);
    },
 
    buildCanvas: function() {
@@ -97,6 +103,7 @@ Graph.prototype = {
          var lastY;
          for(time = startTime + 1, i=1; time < endTime; ++time, ++i) {
             var count = points[time] || 0;
+
             this.context.lineTo(i * 10, this.canvas.height - count - buff.heightOffset - 10); 
             
             lastY = count;

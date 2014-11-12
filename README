@@ -1,7 +1,7 @@
 See it in action at http://ericmalone.net/yad/
 
 This is a simple project built over a few days to test out tech I was unfamiliar
-or not terribly well versed in. The idea was to create a modular visualation of
+or not terribly well versed in. The idea was to create a modular visualization of
 log data (HTTP 200s, 5XXs, honeypot hits) and git commits, and offer some basic
 alerts when something goes wrong.
 
